@@ -14,3 +14,5 @@
 typedef Vector2 WorldCoords;
 typedef Vector2Int TileCoords;
 typedef int TileIndex;
+
+#define UNUSED(x) (void)(x);

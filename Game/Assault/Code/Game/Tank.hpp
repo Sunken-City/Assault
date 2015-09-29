@@ -10,20 +10,24 @@ class Tank : public Entity
 {
 public:
 	Tank(const Vector2& startingPosition, Map* map);
-	~Tank();
-	void Update(float deltaTime);
-	void Render() const;
+	Tank(const Vector2& startingPosition, Map* map, const std::string& imageFilePath);
+	virtual ~Tank();
+	virtual void Update(float deltaTime);
+	virtual void Render() const;
+	virtual void FireBullet();
+	virtual void CollideWith(Entity* ent);
 
-	Texture* GetTexture();
-	void SetTexture(Texture* texture);
+protected:
 
-private:
-	void UpdateFromController(float deltaTime);
 	void CheckForTileCollisions();
 	void CollideWithCorner(const WorldCoords& cornerPoint);
-	static XInputController m_controller;
+	virtual WorldCoords GetNosePosition();
+
+	static const float BULLET_COOLDOWN;
 	static const float DEGREES_PER_SECOND;
 	static const float POSITION_PER_SECOND;
+	static const float TANK_NOSE_LOCATION;
+	static const float TANK_SIZE;
 
 	Texture* m_texture;
 	Map* m_map;

@@ -62,6 +62,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)../../Engine/Code/;$(SolutionDir)Code/</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /F /I "$(TargetPath)" "$(SolutionDir)Run_$(Platform)"</Command>
@@ -93,14 +94,19 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Camera2D.cpp" />
+    <ClCompile Include="EnemyTank.cpp" />
+    <ClCompile Include="EnemyTurret.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Main_Win32.cpp" />
     <ClCompile Include="Map.cpp" />
+    <ClCompile Include="PlayerTank.cpp" />
     <ClCompile Include="Tank.cpp" />
     <ClCompile Include="TheApp.cpp" />
     <ClCompile Include="TheGame.cpp" />
     <ClCompile Include="Tile.cpp" />
+    <ClCompile Include="TileDefinition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Engine\Code\Engine\Engine.vcxproj">
@@ -108,14 +114,19 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bullet.hpp" />
     <ClInclude Include="Camera2D.hpp" />
+    <ClInclude Include="EnemyTank.hpp" />
+    <ClInclude Include="EnemyTurret.hpp" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="Map.hpp" />
+    <ClInclude Include="PlayerTank.hpp" />
     <ClInclude Include="Tank.hpp" />
     <ClInclude Include="TheApp.hpp" />
     <ClInclude Include="TheGame.hpp" />
     <ClInclude Include="Tile.hpp" />
+    <ClInclude Include="TileDefinition.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

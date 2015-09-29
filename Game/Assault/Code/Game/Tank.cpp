@@ -4,18 +4,32 @@
 #include "Game/Map.hpp"
 #include "Game/Tile.hpp"
 
-XInputController Tank::m_controller = XInputController(0);
-
+const float Tank::BULLET_COOLDOWN = 0.4f;
 const float Tank::DEGREES_PER_SECOND = 50.0f;
 const float Tank::POSITION_PER_SECOND = 2.5f;
+const float Tank::TANK_NOSE_LOCATION = 0.5f;
+const float Tank::TANK_SIZE = 1.0f;
 
 Tank::Tank(const Vector2& startingPosition, Map* map) : m_texture(Texture::CreateOrGetTexture("Data/Images/Tank.png")), m_map(map)
 {
-	m_color = RGBA(1.0f, 0.f, 0.f);
-	m_boundingBox = AABB2(Vector2(0.f, 0.f), Vector2(1.0f, 1.0f));
+	m_color = RGBA(1.0f, 1.0f, 1.0f);
+	m_boundingBox = AABB2(Vector2(0.f, 0.f), Vector2(TANK_SIZE, TANK_SIZE));
 	m_position = startingPosition;
 	m_orientation = 0.f;
-	m_physicalRadius = 0.5f;
+	m_physicalRadius = TANK_SIZE / 2.3f;
+	m_cosmeticRadius = TANK_SIZE / 1.7f;
+	SetMaxHealth(10.f);
+}
+
+Tank::Tank(const Vector2& startingPosition, Map* map, const std::string& imageFilePath) : m_texture(Texture::CreateOrGetTexture(imageFilePath)), m_map(map)
+{
+	m_color = RGBA(1.0f, 1.0f, 1.0f);
+	m_boundingBox = AABB2(Vector2(0.f, 0.f), Vector2(TANK_SIZE, TANK_SIZE));
+	m_position = startingPosition;
+	m_orientation = 0.f;
+	m_physicalRadius = TANK_SIZE / 2.3f;
+	m_cosmeticRadius = TANK_SIZE / 1.7f;
+	SetMaxHealth(10.f);
 }
 
 Tank::~Tank()
@@ -24,26 +38,8 @@ Tank::~Tank()
 
 void Tank::Update(float deltaTime)
 {
-	m_controller.Update(deltaTime);
-
-	if (TheApp::instance->IsKeyDown('A'))
-	{
-		m_orientation -= DEGREES_PER_SECOND * deltaTime;
-	}
-	else if (TheApp::instance->IsKeyDown('D'))
-	{
-		m_orientation += DEGREES_PER_SECOND * deltaTime;
-	}
-	if (TheApp::instance->IsKeyDown('W'))
-	{
-		m_position.y += POSITION_PER_SECOND * deltaTime;
-	}
-	else if (TheApp::instance->IsKeyDown('S'))
-	{
-		m_position.y -= POSITION_PER_SECOND * deltaTime;
-	}
-
-	UpdateFromController(deltaTime);
+	float healthRatio = (m_health / m_maxHealth);
+	m_color = RGBA(1.0f, healthRatio, healthRatio);
 
 	Entity::Update(deltaTime);
 
@@ -65,33 +61,14 @@ void Tank::Render() const
 	Entity::Render();
 }
 
-Texture* Tank::GetTexture()
+void Tank::FireBullet()
 {
-	return m_texture;
+
 }
 
-void Tank::SetTexture(Texture* texture)
+void Tank::CollideWith(Entity* ent)
 {
-	m_texture = texture;
-}
-
-void Tank::UpdateFromController(float deltaTime)
-{
-	Vector2 leftStickDirection = m_controller.GetLeftStickPosition();
-	Vector2 rightStickDirection = m_controller.GetRightStickPosition();
-
-	if (leftStickDirection.CalculateMagnitude() > XInputController::DEADZONE || rightStickDirection.CalculateMagnitude() > XInputController::DEADZONE)
-	{
-		Vector2 newVelocity = Vector2(POSITION_PER_SECOND * cos(MathUtils::DegreesToRadians(m_orientation)), POSITION_PER_SECOND * sin(MathUtils::DegreesToRadians(m_orientation)));
-		m_velocity = (newVelocity * leftStickDirection.y * 0.5f) + (newVelocity * rightStickDirection.y * 0.5f);
-
-		m_orientation -= DEGREES_PER_SECOND * deltaTime * leftStickDirection.y;
-		m_orientation += DEGREES_PER_SECOND * deltaTime * rightStickDirection.y;
-	}
-	else
-	{
-		m_velocity = Vector2(0.0f, 0.0f);
-	}
+	UNUSED(ent);
 }
 
 void Tank::CheckForTileCollisions()
@@ -109,7 +86,7 @@ void Tank::CheckForTileCollisions()
 	TileCoords currentTilePosition = currentTile->GetTileCoords();
 
 	Tile* tileToCheck = m_map->GetTileAtCoords(currentTilePosition + NORTH_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		float distanceInsideTile = ((m_position.y + m_physicalRadius) - tileToCheck->GetWorldCoordsFromTileMin().y);
 		if (distanceInsideTile > 0.f)
@@ -120,7 +97,7 @@ void Tank::CheckForTileCollisions()
 
 	//Edge Cases
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + SOUTH_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		float distanceInsideTile = (currentTile->GetWorldCoordsFromTileMin().y - (m_position.y - m_physicalRadius));
 		if (distanceInsideTile > 0.f)
@@ -130,7 +107,7 @@ void Tank::CheckForTileCollisions()
 	}
 
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + WEST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		float distanceInsideTile = ((m_position.x + m_physicalRadius) - tileToCheck->GetWorldCoordsFromTileMin().x);
 		if (distanceInsideTile > 0.f)
@@ -140,7 +117,7 @@ void Tank::CheckForTileCollisions()
 	}
 
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + EAST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		float distanceInsideTile = (currentTile->GetWorldCoordsFromTileMin().x - (m_position.x - m_physicalRadius));
 		if (distanceInsideTile > 0.f)
@@ -151,7 +128,7 @@ void Tank::CheckForTileCollisions()
 
 	//Corner Cases
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + NORTHWEST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		WorldCoords cornerPoint = tileToCheck->GetWorldCoordsFromTileMin();
 		if (MathUtils::IsPointInDisk(cornerPoint, m_position, m_physicalRadius))
@@ -161,7 +138,7 @@ void Tank::CheckForTileCollisions()
 	}
 
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + NORTHEAST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		WorldCoords cornerPoint = tileToCheck->GetWorldCoordsFromTileMin() + WorldCoords(1.0f, 0.0f);
 		if (MathUtils::IsPointInDisk(cornerPoint, m_position, m_physicalRadius))
@@ -171,7 +148,7 @@ void Tank::CheckForTileCollisions()
 	}
 
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + SOUTHWEST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		WorldCoords cornerPoint = currentTile->GetWorldCoordsFromTileMin() + WorldCoords(1.0f, 0.0f);
 		if (MathUtils::IsPointInDisk(cornerPoint, m_position, m_physicalRadius))
@@ -181,7 +158,7 @@ void Tank::CheckForTileCollisions()
 	}
 
 	tileToCheck = m_map->GetTileAtCoords(currentTilePosition + SOUTHEAST_NEIGHBOR);
-	if (tileToCheck->GetType() == TileType::STONE)
+	if (tileToCheck->IsSolid())
 	{
 		WorldCoords cornerPoint = currentTile->GetWorldCoordsFromTileMin();
 		if (MathUtils::IsPointInDisk(cornerPoint, m_position, m_physicalRadius))
@@ -199,4 +176,11 @@ void Tank::CollideWithCorner(const WorldCoords& cornerPoint)
 	float pushDist = m_physicalRadius - distToCorner;
 	pushDir *= pushDist;
 	m_position += pushDir;
+}
+
+WorldCoords Tank::GetNosePosition()
+{
+	Vector2 tankDirection = Vector2(cos(MathUtils::DegreesToRadians(m_orientation)), sin(MathUtils::DegreesToRadians(m_orientation)));
+	Vector2 tankNoseDirection = tankDirection * TANK_NOSE_LOCATION;
+	return m_position + tankNoseDirection;
 }

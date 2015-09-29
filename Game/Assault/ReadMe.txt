@@ -10,7 +10,9 @@
 Known Issues:
 ================================================================================
 
-N/A
+Using the alt key to break out of the window, or any other exploit that causes 
+time to pass without being able to check for collisions, could result in an entity getting
+out of the stage's bounds and creating a crash.
 
 ================================================================================
 How to Use:

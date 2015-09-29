@@ -1,19 +1,13 @@
 #pragma once
 
 #include "Game/GameCommon.hpp"
-
-enum class TileType
-{
-	GRASS,
-	STONE
-};
+#include "Game/TileDefinition.hpp"
 
 class Tile
 {
 public:
-	Tile();
-	Tile(TileCoords position, TileType type);
-	Tile(int x, int y, TileType type);
+	Tile(TileCoords position, TileDefinition* definition);
+	Tile(int x, int y, TileDefinition* definition);
 	~Tile();
 	void Update(float deltaTime);
 	void Render() const;
@@ -21,12 +15,13 @@ public:
 	WorldCoords GetWorldCoordsFromTileMin() const;
 	WorldCoords GetWorldCoordsFromTileCenter() const;
 	TileType GetType() const;
+	bool IsSolid() const;
 
 private:
-	RGBA GetColorFromType(TileType type);
 	static const float TILE_SIZE;
 	static const float HALF_TILE_SIZE;
+
 	TileCoords m_tileCoords;
-	TileType m_type;
-	RGBA m_color;
+	Texture* m_texture;
+	TileDefinition* m_definition;
 };

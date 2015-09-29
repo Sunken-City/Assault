@@ -12,7 +12,12 @@ Entity::Entity()
 , m_orientation(0.0f)
 , m_angularVelocity(0.0f)
 , m_ageInSeconds(0.0f)
-, m_isDead(true)
+, m_isDead(false)
+, m_maxHealth(10.f)
+, m_health(m_maxHealth)
+, m_physicalRadius(0.0f)
+, m_cosmeticRadius(0.0f)
+, m_faction(ENEMY_FACTION)
 {
 }
 
@@ -22,10 +27,6 @@ Entity::~Entity()
 
 void Entity::Update(float deltaTime)
 {
-	if (TheApp::instance->WasKeyJustPressed('G'))
-	{
-		m_displayDebugInfo = !m_displayDebugInfo;
-	}
 	m_velocity += m_acceleration * deltaTime;
 	m_position += m_velocity * deltaTime;
 	m_orientation += m_angularVelocity * deltaTime;
@@ -48,6 +49,9 @@ void Entity::Render() const
 
 		TheRenderer::instance->SetColor(1.0f, 0.0f, 0.0f, 1.0f);
 		TheRenderer::instance->DrawPolygonOutline(m_position, m_physicalRadius, TheRenderer::CIRCLE_SIDES, 0.0f);
+
+		TheRenderer::instance->SetColor(0.0f, 0.0f, 1.0f, 1.0f);
+		TheRenderer::instance->DrawPolygonOutline(m_position, m_cosmeticRadius, TheRenderer::CIRCLE_SIDES, 0.0f);
 
 		TheRenderer::instance->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 	}
@@ -73,9 +77,37 @@ float Entity::GetOrientation() const
 	return m_orientation;
 }
 
+
+void Entity::TakeDamage(float damage)
+{
+	m_health = MathUtils::Clamp(m_health - damage, 0.f, m_maxHealth);
+	if (m_health <= 0.f)
+	{
+		m_isDead = true;
+	}
+}
+
+
+void Entity::SetMaxHealth(float maxHealth)
+{
+	m_maxHealth = maxHealth;
+	m_health = maxHealth;
+}
+
 bool Entity::IsDead() const
 {
 	return m_isDead;
+}
+
+
+int Entity::GetFaction()
+{
+	return m_faction;
+}
+
+void Entity::CollideWith(Entity* ent)
+{
+	UNUSED(ent);
 }
 
 void Entity::ToggleDebugDraw()

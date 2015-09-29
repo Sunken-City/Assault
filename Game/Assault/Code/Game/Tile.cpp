@@ -1,19 +1,16 @@
 #include "Game/Tile.hpp"
 #include "Engine/Renderer/AABB2.hpp"
+#include "Engine/Renderer/Texture.hpp"
 
 const float Tile::TILE_SIZE = 1.0f;
 const float Tile::HALF_TILE_SIZE = TILE_SIZE / 2.f;
 
-Tile::Tile() : m_tileCoords(0, 0), m_type(TileType::GRASS), m_color(RGBA(0.0f, 0.5f, 0.0f))
-{
-}
-
-Tile::Tile(TileCoords position, TileType type) : m_tileCoords(position), m_type(type), m_color(GetColorFromType(type))
+Tile::Tile(TileCoords position, TileDefinition* definition) : m_tileCoords(position), m_definition(definition)
 {
 
 }
 
-Tile::Tile(int x, int y, TileType type) : m_tileCoords(x, y), m_type(type), m_color(GetColorFromType(type))
+Tile::Tile(int x, int y, TileDefinition* definition) : m_tileCoords(x, y), m_definition(definition)
 {
 
 }
@@ -33,7 +30,8 @@ void Tile::Render() const
 {
 	TheRenderer::instance->PushMatrix();
 	TheRenderer::instance->Translate(GetWorldCoordsFromTileMin());
-	TheRenderer::instance->DrawAABB(AABB2(Vector2(0.0f, 0.0f), Vector2(TILE_SIZE, TILE_SIZE)), m_color);
+	AABB2 TextureCoords = m_definition->GetTextureCoordinates();
+	TheRenderer::instance->DrawTexturedAABB(AABB2(Vector2(0.0f, 0.0f), Vector2(TILE_SIZE, TILE_SIZE)), TextureCoords.mins, TextureCoords.maxs, *m_definition->GetTexture(), m_definition->GetColor());
 	TheRenderer::instance->PopMatrix();
 }
 
@@ -52,24 +50,13 @@ WorldCoords Tile::GetWorldCoordsFromTileCenter() const
 	return WorldCoords(static_cast<float>(m_tileCoords.x) + HALF_TILE_SIZE, static_cast<float>(m_tileCoords.y) + HALF_TILE_SIZE);
 }
 
-RGBA Tile::GetColorFromType(TileType type)
-{
-	if (type == TileType::GRASS)
-	{
-		return RGBA(0.0f, 0.8f, 0.0f);
-	}
-	else if (type == TileType::STONE)
-	{
-		return RGBA(0.5f, 0.5f, 0.5f);
-	}
-	else
-	{
-		return RGBA(0.7f, 0.9f, 1.0f);
-	}
-}
-
 TileType Tile::GetType() const
 {
-	return m_type;
+	return m_definition->GetType();
+}
+
+bool Tile::IsSolid() const
+{
+	return m_definition->IsSolid();
 }
 

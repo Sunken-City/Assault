@@ -9,7 +9,6 @@ public:
 	~TheGame();
 	void Update(float deltaTime);
 	void Render() const;
-	static int GetRandom(int minimum, int maximum);
 
 	static TheGame* instance;
 
