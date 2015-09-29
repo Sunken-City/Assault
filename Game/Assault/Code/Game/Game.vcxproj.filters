@@ -50,9 +50,6 @@
     <ClCompile Include="EnemyTank.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
-    <ClCompile Include="EnemyTurret.cpp">
-      <Filter>Entities</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TheGame.hpp">
@@ -89,9 +86,6 @@
       <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="EnemyTank.hpp">
-      <Filter>Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="EnemyTurret.hpp">
       <Filter>Entities</Filter>
     </ClInclude>
   </ItemGroup>

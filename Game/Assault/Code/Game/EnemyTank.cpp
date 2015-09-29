@@ -92,5 +92,5 @@ void EnemyTank::FireBullet()
 
 void EnemyTank::CollideWith(Entity* ent)
 {
-
+	UNUSED(ent);
 }

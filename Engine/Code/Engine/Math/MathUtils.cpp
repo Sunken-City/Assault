@@ -1,6 +1,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vector2.hpp"
 #include <math.h>
+#include <cstdlib>
 
 float MathUtils::Lerp(float fraction, float initialValue, float endValue)
 {
@@ -43,6 +44,22 @@ float MathUtils::RangeMap(float inValue, float min1, float max1, float min2, flo
 	return min2 + ((max2 - min2) * ((inValue - min1) / (max1 - min1)));
 }
 
+int MathUtils::Clamp(int inputValue, int min, int max)
+{
+	if (inputValue < min)
+	{
+		return min;
+	}
+	else if (inputValue > max)
+	{
+		return max;
+	}
+	else
+	{
+		return inputValue;
+	}
+}
+
 float MathUtils::Clamp(float inputValue, float min, float max)
 {
 	if (inputValue < min)
@@ -76,6 +93,46 @@ bool MathUtils::IsPointInDisk(const Vector2& point, const Vector2& center, float
 	//A point is a disk with radius 0
 	return DoDiscsOverlap(point, 0.f, center, radius);
 }
+
+float MathUtils::CalcShortestAngularDisplacement(float fromDegrees, float toDegrees)
+{
+	float angularDisplacement = toDegrees - fromDegrees;
+	while (angularDisplacement > 180.f)
+	{
+		angularDisplacement -= 360.f;
+	}
+	while (angularDisplacement < -180.f)
+	{
+		angularDisplacement += 360.f;
+	}
+	return angularDisplacement;
+}
+
+int MathUtils::GetRandom(int minimum, int maximum)
+{
+	return Clamp(rand() % maximum + minimum, minimum, maximum);
+}
+
+float MathUtils::GetRandom()
+{
+	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
+
+float MathUtils::GetRandomFromZeroTo(float maximum)
+{
+	return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / maximum));
+}
+
+float MathUtils::GetRandom(float minimum, float maximum)
+{
+	return minimum + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maximum - minimum)));
+}
+
+float MathUtils::Dot(const Vector2 & a, const Vector2 & b)
+{
+	return(a.x * b.x) + (a.y * b.y);
+}
+
 
 const float MathUtils::pi = 3.14159265358f;
 

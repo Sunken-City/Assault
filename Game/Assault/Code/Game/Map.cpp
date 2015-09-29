@@ -7,12 +7,14 @@
 #include "Game/Camera2D.hpp"
 #include "Game/Bullet.hpp"
 
-Map::Map(const TileCoords& size) : m_size(size)
+XInputController Map::m_controller = XInputController(0); 
+const float Map::TIME_TO_RESPAWN = 5.0f;
+
+Map::Map(const TileCoords& size) : m_size(size), m_waitingForRespawn(false)
 {
 	CreateTileDefinitions();
 
 	//Map Generation
-	TileCoords tankSpawnLocation;
 	for (int y = 0; y < m_size.y; y++)
 	{
 		for (int x = 0; x < m_size.x; x++)
@@ -31,12 +33,12 @@ Map::Map(const TileCoords& size) : m_size(size)
 			//Set the last grass tile to be our spawn location.
 			if (type == &m_definitions[(int)TileType::GRASS])
 			{
-				tankSpawnLocation = TileCoords(x, y);
+				m_playerSpawn = TileCoords(x, y);
 			}
 			m_tiles.push_back(Tile(x, y, type));
 		}
 	}
-	PlayerTank* player = new PlayerTank(Map::GetWorldCoordsFromTileCoords(tankSpawnLocation), this);
+	m_playerTank = new PlayerTank(Map::GetWorldCoordsFromTileCoords(m_playerSpawn), this, m_controller);
 
 	for (int i = 0; i < NUM_TURRETS; i++)
 	{
@@ -47,7 +49,7 @@ Map::Map(const TileCoords& size) : m_size(size)
 			selectedTile = &m_tiles[MathUtils::GetRandom(0, lastTileIndex)];
 		}
 		WorldCoords turretSpawnLocation = selectedTile->GetWorldCoordsFromTileCenter();
-		EnemyTurret* enemy = new EnemyTurret(turretSpawnLocation, this, player);
+		EnemyTurret* enemy = new EnemyTurret(turretSpawnLocation, this, m_playerTank);
 		m_entities.insert(enemy);
 	}
 
@@ -60,12 +62,12 @@ Map::Map(const TileCoords& size) : m_size(size)
 			selectedTile = &m_tiles[MathUtils::GetRandom(0, lastTileIndex)];
 		}
 		WorldCoords tankSpawnLocation = selectedTile->GetWorldCoordsFromTileCenter();
-		EnemyTank* enemy = new EnemyTank(tankSpawnLocation, this, player);
+		EnemyTank* enemy = new EnemyTank(tankSpawnLocation, this, m_playerTank);
 		m_entities.insert(enemy);
 	}
 
-	m_entities.insert(player);
-	m_Camera = new Camera2D(player);
+	m_entities.insert(m_playerTank);
+	m_Camera = new Camera2D(m_playerTank);
 }
 
 Map::~Map()
@@ -74,6 +76,12 @@ Map::~Map()
 
 void Map::Update(float deltaTime)
 {
+	m_controller.Update(deltaTime);
+	if ((m_controller.JustPressed(XboxButton::START) || TheApp::instance->WasKeyJustPressed('P')) && !m_waitingForRespawn)
+	{
+		TheGame::instance->TogglePause();
+	}
+
 	for (std::set<Entity*>::iterator iter = m_entities.begin(); iter != m_entities.end(); ++iter)
 	{
 		Entity* gameObject = *iter;
@@ -99,11 +107,30 @@ void Map::Update(float deltaTime)
 		}
 	}
 
+	if (m_playerTank && m_playerTank->IsDead())
+	{
+		m_playerTank = nullptr;
+		m_Camera->ShouldUpdate(false);
+		m_waitingForRespawn = true;
+	}
+
+	if (m_waitingForRespawn)
+	{
+		playerTankTimeSinceDeath += deltaTime;
+		if (playerTankTimeSinceDeath > TIME_TO_RESPAWN)
+		{
+			TheGame::instance->TogglePause();
+			m_waitingForRespawn = false;
+			playerTankTimeSinceDeath = 0.f;
+		}
+	}
+
 	for (std::set<Entity*>::iterator iter = m_entities.begin(); iter != m_entities.end(); ++iter)
 	{
 		Entity* gameObject = *iter;
 		if (gameObject->IsDead())
 		{
+			delete gameObject;
 			iter = m_entities.erase(iter);
 		}
 		if (iter == m_entities.end())
@@ -117,6 +144,7 @@ void Map::Update(float deltaTime)
 		Bullet* gameObject = *iter;
 		if (gameObject->IsDead())
 		{
+			delete gameObject;
 			iter = m_bullets.erase(iter);
 		}
 		if (iter == m_bullets.end())
@@ -124,6 +152,7 @@ void Map::Update(float deltaTime)
 			break;
 		}
 	}
+	m_Camera->Update(deltaTime);
 }
 
 void Map::Render() const
@@ -181,7 +210,7 @@ bool Map::HasLineOfSight(const WorldCoords& start, const WorldCoords& end)
 {
 	Vector2 distance = end - start;
 	Vector2 current = start;
-	Vector2 step = distance * .01;
+	Vector2 step = distance * .01f;
 	for (int i = 0; i < 100; i++)
 	{
 		current += step;
@@ -205,6 +234,17 @@ TileCoords Map::GetTileCoordsFromIndex(int index) const
 WorldCoords Map::GetWorldCoordsFromTileCoords(const TileCoords& tileCoords)
 {
 	return WorldCoords(static_cast<float>(tileCoords.x), static_cast<float>(tileCoords.y));
+}
+
+void Map::RespawnTank()
+{
+	if (!m_playerTank)
+	{
+		m_playerTank = new PlayerTank(Map::GetWorldCoordsFromTileCoords(m_playerSpawn), this, m_controller);
+		m_entities.insert(m_playerTank);
+		m_Camera->ShouldUpdate(true);
+		m_Camera->FollowPlayer(m_playerTank);
+	}
 }
 
 TileCoords Map::GetTileCoordsFromWorldCoords(const WorldCoords& worldCoordinates) const

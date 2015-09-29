@@ -5,7 +5,7 @@
 class PlayerTank : public Tank
 {
 public:
-	PlayerTank(const Vector2& startingPosition, Map* map);
+	PlayerTank(const Vector2& startingPosition, Map* map, const XInputController& controller);
 	~PlayerTank();
 	virtual void Update(float deltaTime);
 	virtual void Render() const;
@@ -17,7 +17,6 @@ private:
 	void UpdateFromController(float deltaTime);
 	WorldCoords GetNosePosition();
 
-	static XInputController m_controller;
 	static const float BULLET_COOLDOWN;
 	static const float DEGREES_PER_SECOND;
 	static const float POSITION_PER_SECOND;
@@ -25,5 +24,6 @@ private:
 	static const float TANK_SIZE;
 
 	float m_timeSinceLastBullet;
+	XInputController m_controller;
 
 };

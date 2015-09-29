@@ -28,7 +28,7 @@ bool g_isQuitting = false;
 HWND g_hWnd = nullptr;
 HDC g_displayDeviceContext = nullptr;
 HGLRC g_openGLRenderingContext = nullptr;
-const char* APP_NAME = "Rocket-Powered Aerobics Odyssey";
+const char* APP_NAME = "Celebrity Katana Deathmatch";
 
 
 //-----------------------------------------------------------------------------------------------

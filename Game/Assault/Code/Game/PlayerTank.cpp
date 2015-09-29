@@ -1,7 +1,6 @@
 #include "PlayerTank.hpp"
 #include "Map.hpp"
-
-XInputController PlayerTank::m_controller = XInputController(0);
+#include "TheGame.hpp"
 
 const float PlayerTank::BULLET_COOLDOWN = 0.3f;
 const float PlayerTank::DEGREES_PER_SECOND = 50.0f;
@@ -9,7 +8,8 @@ const float PlayerTank::POSITION_PER_SECOND = 2.5f;
 const float PlayerTank::TANK_NOSE_LOCATION = 0.5f;
 const float PlayerTank::TANK_SIZE = 1.0f;
 
-PlayerTank::PlayerTank(const Vector2& startingPosition, Map* map) : Tank(startingPosition, map), m_timeSinceLastBullet(BULLET_COOLDOWN)
+PlayerTank::PlayerTank(const Vector2& startingPosition, Map* map, const XInputController& controller) 
+: Tank(startingPosition, map), m_timeSinceLastBullet(BULLET_COOLDOWN), m_controller(controller)
 {
 	m_faction = Entity::PLAYER_FACTION;
 	Entity::SetMaxHealth(10.f);
@@ -17,12 +17,12 @@ PlayerTank::PlayerTank(const Vector2& startingPosition, Map* map) : Tank(startin
 
 PlayerTank::~PlayerTank()
 {
+	m_map->playerTankTimeSinceDeath = 0.f;
 }
 
 void PlayerTank::Update(float deltaTime)
 {
 	m_controller.Update(deltaTime);
-
 	if (TheApp::instance->WasKeyJustPressed('H'))
 	{
 		TakeDamage(1.f);
@@ -41,6 +41,7 @@ void PlayerTank::Update(float deltaTime)
 void PlayerTank::Render() const
 {
 	Tank::Render();
+
 }
 
 void PlayerTank::UpdateFromController(float deltaTime)
@@ -63,7 +64,9 @@ void PlayerTank::UpdateFromController(float deltaTime)
 
 	m_timeSinceLastBullet += deltaTime;
 
-	if (m_controller.GetRightTrigger() > 128 && m_timeSinceLastBullet > BULLET_COOLDOWN)
+	if ((m_controller.GetRightTrigger() > 128 || TheApp::instance->WasKeyJustPressed(' ')) 
+		&& m_timeSinceLastBullet > BULLET_COOLDOWN 
+		&& !TheGame::instance->IsPaused())
 	{
 		FireBullet();
 		m_timeSinceLastBullet = 0.f;
@@ -79,7 +82,7 @@ WorldCoords PlayerTank::GetNosePosition()
 
 void PlayerTank::FireBullet()
 {
-	m_map->SpawnBullet(GetNosePosition(), m_orientation, m_faction, 4.0f, 2.0f);
+	m_map->SpawnBullet(GetNosePosition(), m_orientation, m_faction, 10.0f, 0.5f);
 }
 
 void PlayerTank::CollideWith(Entity* ent)

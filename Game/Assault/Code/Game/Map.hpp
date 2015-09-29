@@ -2,12 +2,13 @@
 
 #include "Game/Tile.hpp"
 #include "Game/TileDefinition.hpp"
+#include "Engine/Input/XInputController.hpp"
 #include <vector>
 #include <set>
 
 class Entity;
 class Camera2D;
-class Tank;
+class PlayerTank;
 class Bullet;
 
 class Map
@@ -29,12 +30,17 @@ public:
 	TileCoords GetTileCoordsFromIndex(int index) const;
 	TileIndex GetIndexFromTileCoords(const TileCoords& tileCoordinates) const;
 	bool HasLineOfSight(const WorldCoords& start, const WorldCoords& end);
+	void RespawnTank();
 
 	static WorldCoords GetWorldCoordsFromTileCoords(const TileCoords& tileCoords);
+
+	float playerTankTimeSinceDeath;
 
 private:
 	static const int NUM_TURRETS = 10;
 	static const int NUM_TANKS = 10;
+	static const float TIME_TO_RESPAWN;
+	static XInputController m_controller;
 
 	std::vector<TileDefinition> m_definitions;
 	std::vector<Tile> m_tiles;	
@@ -42,4 +48,7 @@ private:
 	std::set<Entity*> m_entities;
 	std::set<Bullet*> m_bullets;
 	Camera2D* m_Camera;
+	PlayerTank* m_playerTank;
+	Vector2Int m_playerSpawn;
+	bool m_waitingForRespawn;
 };
